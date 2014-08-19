@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using MojangApi;
 
 namespace MinecraftClient
 {
@@ -105,7 +106,7 @@ namespace MinecraftClient
         private static void InitializeClient()
         {
 
-            MinecraftCom.LoginResult result;
+            MinecraftLoginResult result = MinecraftLoginResult.OtherError;
             Settings.Username = Settings.Login;
             string sessionID = "";
             string UUID = "";
@@ -115,15 +116,20 @@ namespace MinecraftClient
                 Console.ForegroundColor = ConsoleColor.DarkGray;
                 Console.WriteLine("You chose to run in offline mode.");
                 Console.ForegroundColor = ConsoleColor.Gray;
-                result = MinecraftCom.LoginResult.Success;
+                result = MinecraftLoginResult.Success;
                 sessionID = "0";
             }
             else
             {
                 Console.WriteLine("Connecting to Minecraft.net...");
-                result = MinecraftCom.GetLogin(ref Settings.Username, Settings.Password, ref sessionID, ref UUID);
+				try
+				{
+                	result = MinecraftCom.GetLogin(ref Settings.Username, Settings.Password, ref sessionID, ref UUID);
+				} catch(MinecraftAuthException ex) {
+					DisplayError (ex);
+				}
             }
-            if (result == MinecraftCom.LoginResult.Success)
+            if (result == MinecraftLoginResult.Success)
             {
                 if (Settings.ConsoleTitle != "")
                 {
@@ -190,13 +196,13 @@ namespace MinecraftClient
                 Console.Write("Connection failed : ");
                 switch (result)
                 {
-                    case MinecraftCom.LoginResult.AccountMigrated: Console.WriteLine("Account migrated, use e-mail as username."); break;
-                    case MinecraftCom.LoginResult.Blocked: Console.WriteLine("Too many failed logins. Please try again later."); break;
-                    case MinecraftCom.LoginResult.ServiceUnavailable: Console.WriteLine("Login servers are unavailable. Please try again later."); break;
-                    case MinecraftCom.LoginResult.WrongPassword: Console.WriteLine("Incorrect password."); break;
-                    case MinecraftCom.LoginResult.NotPremium: Console.WriteLine("User not premium."); break;
-                    case MinecraftCom.LoginResult.OtherError: Console.WriteLine("Network error."); break;
-                    case MinecraftCom.LoginResult.SSLError: Console.WriteLine("SSL Error.");
+                    case MinecraftLoginResult.AccountMigrated: Console.WriteLine("Account migrated, use e-mail as username."); break;
+                    case MinecraftLoginResult.Blocked: Console.WriteLine("Too many failed logins. Please try again later."); break;
+                    case MinecraftLoginResult.ServiceUnavailable: Console.WriteLine("Login servers are unavailable. Please try again later."); break;
+                    case MinecraftLoginResult.WrongPassword: Console.WriteLine("Incorrect password."); break;
+                    case MinecraftLoginResult.NotPremium: Console.WriteLine("User not premium."); break;
+                    case MinecraftLoginResult.OtherError: Console.WriteLine("Network error."); break;
+                    case MinecraftLoginResult.SSLError: Console.WriteLine("SSL Error.");
                         if (isUsingMono)
                         {
                             Console.ForegroundColor = ConsoleColor.DarkGray;
@@ -279,5 +285,14 @@ namespace MinecraftClient
             if (Client != null) { Client.Disconnect(); ConsoleIO.Reset(); }
             Environment.Exit(0);
         }
+
+		static void DisplayError (MinecraftAuthException ex)
+		{
+			Console.ForegroundColor = ConsoleColor.Red;
+			Console.WriteLine ("--- ERROR ---");
+			Console.WriteLine (ex.Message);
+			Console.ReadKey ();
+			Environment.Exit (1);
+		}
     }
 }

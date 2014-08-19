@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{B04FAFBF-1548-4313-88D3-06F964D0F382}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>MojangApi</RootNamespace>
+    <AssemblyName>MojangApi</AssemblyName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug</OutputPath>
+    <DefineConstants>DEBUG;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>full</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\packages\Newtonsoft.Json.6.0.4\lib\net40\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Yggdrasil\YggdrasilAuthError.cs" />
+    <Compile Include="Yggdrasil\YggdrasilAuthProvider.cs" />
+    <Compile Include="Yggdrasil\YggdrasilAuthRequest.cs" />
+    <Compile Include="Yggdrasil\YggdrasilAuthRequestAgent.cs" />
+    <Compile Include="Yggdrasil\YggdrasilAuthResponse.cs" />
+    <Compile Include="Yggdrasil\YggdrasilProfile.cs" />
+    <Compile Include="Yggdrasil\YggdrasilRefreshRequest.cs" />
+    <Compile Include="Yggdrasil\YggdrasilRefreshResponse.cs" />
+    <Compile Include="IMinecraftAuthProvider.cs" />
+    <Compile Include="MinecraftAuthException.cs" />
+    <Compile Include="MinecraftAuthServer.cs" />
+    <Compile Include="MinecraftLoginResult.cs" />
+    <Compile Include="MinecraftProfile.cs" />
+    <Compile Include="MinecraftUser.cs" />
+    <Compile Include="Yggdrasil\Yggdrasil.cs" />
+    <Compile Include="MinecraftAuthError.cs" />
+    <Compile Include="Yggdrasil\YggdrasilSessionProvider.cs" />
+    <Compile Include="Yggdrasil\YggdrasilHttpClient.cs" />
+    <Compile Include="Yggdrasil\YggdrasilSessionJoinRequest.cs" />
+    <Compile Include="IMinecraftSessionProvider.cs" />
+    <Compile Include="MinecraftServer.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="c:\Users\riedma1\Projects\Github\reddragon010\Minecraft-Console-Client.git\MojangApi\" />
+  </ItemGroup>
+</Project>

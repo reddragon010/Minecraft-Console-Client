@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Net;
 using System.Net.Sockets;
+using MojangApi;
 
 namespace MinecraftClient
 {
@@ -13,9 +14,21 @@ namespace MinecraftClient
 
     public class MinecraftCom : IAutoComplete
     {
+		private static IMinecraftAuthProvider mcAuthProvider;
+		private static IMinecraftSessionProvider mcSessionProvider;
+		private static WebClient wClient;
+
+		static MinecraftCom()
+		{
+			wClient = new WebClient();
+			wClient.Headers.Add(Yggdrasil.HTTP_HEADER_CONTENTTYPE);
+
+			mcAuthProvider = new YggdrasilAuthProvider ();
+			mcSessionProvider = new YggdrasilSessionProvider ();
+		}
+
         #region Login to Minecraft.net and get a new session ID
 
-        public enum LoginResult { OtherError, ServiceUnavailable, SSLError, Success, WrongPassword, Blocked, AccountMigrated, NotPremium };
 
         /// <summary>
         /// Allows to login to a premium Minecraft account using the Yggdrasil authentication scheme.
@@ -26,58 +39,18 @@ namespace MinecraftClient
         /// <param name="uuid">Will contain the player's UUID, needed for multiplayer</param>
         /// <returns>Returns the status of the login (Success, Failure, etc.)</returns>
 
-        public static LoginResult GetLogin(ref string user, string pass, ref string accesstoken, ref string uuid)
+        public static MinecraftLoginResult GetLogin(ref string user, string pass, ref string accesstoken, ref string uuid)
         {
-            try
-            {
-                WebClient wClient = new WebClient();
-                wClient.Headers.Add("Content-Type: application/json");
-                string json_request = "{\"agent\": { \"name\": \"Minecraft\", \"version\": 1 }, \"username\": \"" + user + "\", \"password\": \"" + pass + "\" }";
-                string result = wClient.UploadString("https://authserver.mojang.com/authenticate", json_request);
-                if (result.Contains("availableProfiles\":[]}"))
-                {
-                    return LoginResult.NotPremium;
-                }
-                else
-                {
-                    string[] temp = result.Split(new string[] { "accessToken\":\"" }, StringSplitOptions.RemoveEmptyEntries);
-                    if (temp.Length >= 2) { accesstoken = temp[1].Split('"')[0]; }
-                    temp = result.Split(new string[] { "name\":\"" }, StringSplitOptions.RemoveEmptyEntries);
-                    if (temp.Length >= 2) { user = temp[1].Split('"')[0]; }
-                    temp = result.Split(new string[] { "availableProfiles\":[{\"id\":\"" }, StringSplitOptions.RemoveEmptyEntries);
-                    if (temp.Length >= 2) { uuid = temp[1].Split('"')[0]; }
-                    return LoginResult.Success;
-                }
-            }
-            catch (WebException e)
-            {
-                if (e.Status == WebExceptionStatus.ProtocolError)
-                {
-                    HttpWebResponse response = (HttpWebResponse)e.Response;
-                    if ((int)response.StatusCode == 403)
-                    {
-                        using (System.IO.StreamReader sr = new System.IO.StreamReader(response.GetResponseStream()))
-                        {
-                            string result = sr.ReadToEnd();
-                            if (result.Contains("UserMigratedException"))
-                            {
-                                return LoginResult.AccountMigrated;
-                            }
-                            else return LoginResult.WrongPassword;
-                        }
-                    }
-                    else if ((int)response.StatusCode == 503)
-                    {
-                        return LoginResult.ServiceUnavailable;
-                    }
-                    else return LoginResult.Blocked;
-                }
-                else if (e.Status == WebExceptionStatus.SendFailure)
-                {
-                    return LoginResult.SSLError;
-                }
-                else return LoginResult.OtherError;
-            }
+			MinecraftUser userObj = new MinecraftUser (user, pass);
+			MinecraftLoginResult result = mcAuthProvider.Login (userObj);
+
+			if (result == MinecraftLoginResult.Success) 
+			{
+				accesstoken = userObj.AuthToken;
+				uuid = userObj.SelectedProfile.Id;
+			}
+
+			return result;
         }
 
         #endregion
@@ -94,14 +67,10 @@ namespace MinecraftClient
 
         public static bool SessionCheck(string uuid, string accesstoken, string serverhash)
         {
-            try
-            {
-                WebClient wClient = new WebClient();
-                wClient.Headers.Add("Content-Type: application/json");
-                string json_request = "{\"accessToken\":\"" + accesstoken + "\",\"selectedProfile\":\"" + uuid + "\",\"serverId\":\"" + serverhash + "\"}";
-                return (wClient.UploadString("https://sessionserver.mojang.com/session/minecraft/join", json_request) == "");
-            }
-            catch (WebException) { return false; }
+			MinecraftUser userObj = new MinecraftUser(accesstoken);
+			userObj.SelectedProfile = new MinecraftProfile(uuid, uuid);
+
+			return mcSessionProvider.JoinServer(userObj, new MinecraftServer(serverhash, IPAddress.Any));
         }
 
         #endregion
@@ -119,6 +88,7 @@ namespace MinecraftClient
             foreach (ChatBot bot in scripts_on_hold) { bots.Add(bot); }
             scripts_on_hold.Clear();
         }
+
         public bool Update()
         {
             for (int i = 0; i < bots.Count; i++) { bots[i].Update(); }
